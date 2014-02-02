@@ -44,6 +44,11 @@ function! s:unite_my_settings()"{{{
 	inoremap <silent> <buffer> <expr> <C-o> unite#do_action('open')
 endfunction"}}}
 
+
+" VimFilerとの連携
+
+autocmd FileType vimfiler call unite#custom_default_action('directory', 'lcd')
+
 " --------------------------------------------------------------------- 
 "    ファイルを読み込む(pathogen使用)
 " --------------------------------------------------------------------- 
