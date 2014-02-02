@@ -266,7 +266,7 @@ autocmd FileType text setlocal textwidth=0
 " ---------------------------------------------------------------------- 
 "   Pthogen
 " ---------------------------------------------------------------------- 
-call pathogen#runtime_append_all_bundles()
+"call pathogen#runtime_append_all_bundles()
 
 
 " http://vim.wikia.com/wiki/List_loaded_scripts
