@@ -19,11 +19,6 @@ let $VIM_CONF_MISCS=$VIM_CONF_ROOT . '/miscs'
 "   runtimepathに $VIM_CONF_VIMFILES を追加
 "
 let &runtimepath=$VIM_CONF_VIMFILES . ','. &runtimepath
-
-
-"   項目の設定について
-
-
 " ---------------------------------------------------------------------- 
 "   設定情報を読み込むための関数(このスクリプトでのみ使用)
 "
@@ -31,24 +26,79 @@ function! s:load_settings (name)
   " 設定情報は $VIM_CONF_SETTINGS 以下に
   "   <a:name>/config.vim
   " として保存されていることを想定している。
+  "
+  " この関数は name が実在するかどうかチェックしない。
+  " 
   let config_file = $VIM_CONF_SETTINGS . "/" . a:name . "/config.vim"
   exec "source " . config_file
 endfunction
 " ---------------------------------------------------------------------- 
 "   設定情報の一覧を取得するための関数(このスクリプトでのみ使用)
-"     - $VIM_CONF_SETTINGS ディレクトリ内にあるディレクリのうち、
-"       直下に 設定ファイル(config.vim) が
-"       取得しているだけ
 "
 function! s:list_settings ()
+  " $VIM_CONF_SETTINGS ディレクトリ内にあるディレクリのうち、
+  " 直下に 設定ファイル(config.vim) があるものを列挙する
+  " 戻り値は次の形式のハッシュ
+  "   nameX    ... 設定情報名
+  "   dirnameX ... ディレクトリ名(<数値>_<設定情報名>)
+  "   { 'name1' : 'dirname1', 'name2' : 'dirname2', 'name3' : 'dirname3' ... }
   set verbose=2
-  let data = [1,2,3,4,5]
-  " let dir  = expand($VIM_CONF_SETTINGS", "*")
-  echo filter(split(globpath($VIM_CONF_SETTINGS,  '*/config.vim'), '\n'), '!isdirectory(v:val)')
-  echo filter(split(globpath($VIM_CONF_SETTINGS,  '*'), '\n'), 'isdirectory(v:val)')
-  " echo globpath($VIM_CONF_SETTINGS, '*')
+  let config_files = filter(split(globpath($VIM_CONF_SETTINGS,  '*/config.vim'), '\n'), '!isdirectory(v:val)')
+  let settings = {}
+  for config_file in config_files
+    let dirname = fnamemodify(config_file, ":p:h:t")
+    let name    = matchlist(dirname, '\v^\d{2}_(.+)$')[1]
+    let settings[name] = dirname
+  endfor
   set verbose=0
+  return settings
 endfunction
+" ---------------------------------------------------------------------- 
+"   $VIM_CONF_SETTINGS以下の設定情報をインデックスする
+"
+let s:settings_list = s:list_settings()
+" ---------------------------------------------------------------------- 
+"   settings_to_use_list
+"
+if !exists("settings_to_use_list")
+  let settings_to_use_list = []
+endif
+" ---------------------------------------------------------------------- 
+"   settings_to_use_list の要素が存在するかチェックする
+"    → 存在しない場合は警告を出す
+"
+function s:check_settings_to_use_list(user_list, settings_list)
+  for item in a:user_list 
+    if !has_key(a:settings_list, item)
+      echo "[" . item . "]の設定情報 -  " . $VIM_CONF_SETTINGS . "/" . item . "/config.vim - が見つかりません。"
+    endif
+  endfor
+endfunction
+call s:check_settings_to_use_list(settings_to_use_list, s:settings_list)
+" ---------------------------------------------------------------------- 
+"  設定を読み込む 
+"
+function s:load_settings_to_use_list(user_list, settings_list)
+  let dirs = [] 
+  " ユーザの設定したリストから読み込むディレクトリの候補リストを作成
+  for item in a:user_list 
+    if has_key(a:settings_list, item)
+       call add(dirs, a:settings_list[item])
+    endif
+  endfor
+  " 候補リストを並び替える
+  call sort(dirs)
+  " 順に読み込む
+  for dir in dirs
+     call s:load_settings(dir)
+  endfor
+endfunction
+call s:load_settings_to_use_list(settings_to_use_list, s:settings_list)
+
+
+
+
+
 
 
 
@@ -212,26 +262,11 @@ set textwidth=0
 autocmd FileType text setlocal textwidth=0
 
 
-" ---------------------------------------------------------------------- 
-"   Settings
-" ---------------------------------------------------------------------- 
-source $VIM_CONF_SETTINGS/80_skk/config.vim
-"call s:load_settings('skk')
-call s:list_settings()
-
-" ---------------------------------------------------------------------- 
-"   kwbd
-" ---------------------------------------------------------------------- 
-"    http://nanasi.jp/articles/vim/kwbd_vim.html
-runtime kwbd/kwbd.vim
-
 
 " ---------------------------------------------------------------------- 
 "   Pthogen
 " ---------------------------------------------------------------------- 
 call pathogen#runtime_append_all_bundles()
-
-
 
 
 " http://vim.wikia.com/wiki/List_loaded_scripts
