@@ -61,6 +61,7 @@ let s:settings_list = s:list_settings()
 "   settings_to_use_list
 "
 if !exists("settings_to_use_list")
+  echo "Warning : user variable 'settings_to_use_list' is not defined"
   let settings_to_use_list = []
 endif
 " ---------------------------------------------------------------------- 
